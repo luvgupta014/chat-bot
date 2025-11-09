@@ -1,0 +1,309 @@
+
+html, body, #root, .App {
+  height: 100vh;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  font-size: 0.92rem;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Remove default theme classes */
+html {
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+/* Light Theme (Default) */
+.light-theme {
+  --bg-primary: #f9fafb;
+  --bg-secondary: #ffffff;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --border-color: #e5e7eb;
+}
+
+html.light-theme,
+html.light-theme body {
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+.light-theme .text-gray-600 {
+  color: #4b5563 !important;
+}
+
+.light-theme .text-gray-700 {
+  color: #374151 !important;
+}
+
+.light-theme .text-gray-800,
+.light-theme .text-gray-900 {
+  color: #111827 !important;
+}
+
+.light-theme .text-gray-300 {
+  color: #d1d5db !important;
+}
+
+.light-theme .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+.light-theme .text-white {
+  color: #ffffff !important;
+}
+
+.light-theme .bg-white {
+  background-color: #ffffff !important;
+}
+
+.light-theme .bg-gray-50 {
+  background-color: #f9fafb !important;
+}
+
+/* Dark Theme */
+.dark-theme {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --border-color: #334155;
+}
+
+html.dark-theme,
+html.dark-theme body {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+
+.dark-theme .text-white {
+  color: #ffffff !important;
+}
+
+.dark-theme .text-gray-300 {
+  color: #d1d5db !important;
+}
+
+.dark-theme .text-gray-400 {
+  color: #9ca3af !important;
+}
+
+.dark-theme .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+.dark-theme .text-gray-600,
+.dark-theme .text-gray-700 {
+  color: #cbd5e1 !important;
+}
+
+.dark-theme .text-gray-900 {
+  color: #f9fafb !important;
+}
+
+.dark-theme .bg-white {
+  background-color: #1e293b !important;
+}
+
+.dark-theme .bg-gray-50 {
+  background-color: #1e293b !important;
+}
+
+.dark-theme .bg-slate-700 {
+  background-color: #334155 !important;
+}
+
+.dark-theme .bg-slate-800 {
+  background-color: #1e293b !important;
+}
+
+.dark-theme .bg-slate-900 {
+  background-color: #0f172a !important;
+}
+
+.dark-theme .border,
+.dark-theme .border-gray-200 {
+  border-color: var(--border-color) !important;
+}
+
+
+/* Neon Green Theme */
+.neon-theme {
+  --bg-primary: #0a150c;
+  --bg-secondary: #142018;
+  --text-primary: #39ff14;
+  --text-secondary: #8ffa70;
+  --text-muted: #6dd64f;
+  --border-color: #39ff14;
+}
+
+html.neon-theme,
+html.neon-theme body {
+  background-color: #0a150c;
+  color: #39ff14;
+}
+
+.neon-theme .text-white,
+.neon-theme .text-gray-900 {
+  color: #39ff14 !important;
+}
+
+.neon-theme .text-gray-300,
+.neon-theme .text-gray-400,
+.neon-theme .text-gray-500,
+.neon-theme .text-gray-600,
+.neon-theme .text-gray-700 {
+  color: #8ffa70 !important;
+}
+
+.neon-theme .text-\[#baffc9\] {
+  color: #8ffa70 !important;
+}
+
+.neon-theme .text-\[#39ff14\] {
+  color: #39ff14 !important;
+}
+
+.neon-theme .bg-white,
+.neon-theme .bg-gray-50 {
+  background-color: #142018 !important;
+}
+
+.neon-theme .bg-slate-700,
+.neon-theme .bg-slate-800,
+.neon-theme .bg-slate-900,
+.neon-theme .bg-\[#1a2f1d\],
+.neon-theme .bg-\[#101d12\] {
+  background-color: #142018 !important;
+}
+
+.neon-theme .border,
+.neon-theme .border-gray-200,
+.neon-theme .border-gray-300 {
+  border-color: #39ff14 !important;
+}
+
+.neon-theme input,
+.neon-theme textarea,
+.neon-theme select {
+  background-color: #0a150c !important;
+  color: #39ff14 !important;
+  border-color: #39ff14 !important;
+}
+
+.neon-theme input::placeholder,
+.neon-theme textarea::placeholder {
+  color: #6dd64f !important;
+  opacity: 0.7;
+}
+
+.neon-theme button:not(.ring-offset-1) {
+  border-color: #39ff14 !important;
+}
+
+/* Neon glow effects */
+.neon-theme .shadow-sm,
+.neon-theme .shadow-md {
+  box-shadow: 0 0 10px rgba(57, 255, 20, 0.3) !important;
+}
+
+.neon-theme .shadow-lg,
+.neon-theme .shadow-xl {
+  box-shadow: 0 0 20px rgba(57, 255, 20, 0.4) !important;
+}
+
+/* Neon theme specific color overrides for badges and pills */
+.neon-theme .text-yellow-800,
+.neon-theme .text-yellow-200,
+.neon-theme .text-blue-800,
+.neon-theme .text-blue-200,
+.neon-theme .text-purple-800,
+.neon-theme .text-purple-200,
+.neon-theme .text-purple-400,
+.neon-theme .text-purple-600,
+.neon-theme .text-green-600,
+.neon-theme .text-green-400,
+.neon-theme .text-blue-600,
+.neon-theme .text-blue-400,
+.neon-theme .text-orange-600,
+.neon-theme .text-orange-400,
+.neon-theme .text-pink-600,
+.neon-theme .text-pink-400,
+.neon-theme .text-teal-600,
+.neon-theme .text-teal-400,
+.neon-theme .text-indigo-600,
+.neon-theme .text-indigo-400 {
+  color: #39ff14 !important;
+}
+
+.neon-theme .bg-yellow-100,
+.neon-theme .bg-yellow-900,
+.neon-theme .bg-blue-100,
+.neon-theme .bg-blue-900,
+.neon-theme .bg-purple-100,
+.neon-theme .bg-purple-900 {
+  background-color: #0f1f11 !important;
+}
+
+/* Ensure smooth theme transitions */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Light Theme - ChatWindow and Message Backgrounds */
+.light-theme .bg-gradient-to-br {
+  background: linear-gradient(to bottom right, #f9fafb, #f3f4f6) !important;
+}
+
+.light-theme .bg-gray-50 {
+  background-color: #f9fafb !important;
+}
+
+.light-theme .bg-gray-100 {
+  background-color: #f3f4f6 !important;
+}
+
+/* Dark Theme - ChatWindow Message Box */
+.dark-theme .dark\:bg-slate-700 {
+  background-color: #334155 !important;
+}
+
+.dark-theme .dark\:text-gray-200 {
+  color: #cbd5e1 !important;
+}
+
+/* Light Theme - Message Box Text */
+.light-theme .text-gray-800 {
+  color: #1f2937 !important;
+}
+
+/* Light Theme - Empty State Cards */
+.light-theme .bg-white {
+  background-color: #ffffff !important;
+}
+
+.light-theme .border-gray-200 {
+  border-color: #e5e7eb !important;
+}
+
+/* Light Theme - Loading Indicator */
+.light-theme .bg-blue-500 {
+  background-color: #3b82f6 !important;
+}
+
+.light-theme .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+/* Neon Theme - Message Box Consistency */
+.neon-theme .neon-theme\:bg-\[#142018\] {
+  background-color: #142018 !important;
+}
+
+.neon-theme .neon-theme\:text-\[#8ffa70\] {
+  color: #8ffa70 !important;
+}
+
