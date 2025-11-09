@@ -9,9 +9,17 @@ export const protect = async (req, res, next) => {
       // Get token from header
       token = req.headers.authorization.split(' ')[1];
 
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production');
+      console.log(token);
 
+      // Verify token - get secret at runtime, not import time
+      const JWT_SECRET = process.env.JWT_SECRET;
+      if (!JWT_SECRET) {
+        console.error('❌ JWT_SECRET is not set in environment variables');
+        return res.status(401).json({ error: 'Server configuration error' });
+      }
+      const decoded = jwt.verify(token, JWT_SECRET);
+
+      console.log(decoded);
       // Get user from token
       req.user = await User.findById(decoded.id).select('-password');
 
@@ -33,7 +41,12 @@ export const protect = async (req, res, next) => {
 
 // Generate JWT Token
 export const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production', {
+  const JWT_SECRET = process.env.JWT_SECRET;
+  if (!JWT_SECRET) {
+    console.error('❌ JWT_SECRET is not set in environment variables');
+    throw new Error('JWT_SECRET must be set in .env file');
+  }
+  return jwt.sign({ id }, JWT_SECRET, {
     expiresIn: '30d' // Token expires in 30 days
   });
 };

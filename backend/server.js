@@ -16,14 +16,15 @@ dotenv.config()
 
 console.log(`📋 Environment loaded:`);
 console.log(`   PORT: ${process.env.PORT || 5000}`);
+console.log(`   JWT_SECRET: ${process.env.JWT_SECRET ? '✓ (set)' : '✗ (NOT SET - CRITICAL!)'}`);
 console.log(`   GOOGLE_API_ENDPOINT_OVERRIDE: ${process.env.GOOGLE_API_ENDPOINT_OVERRIDE || '(not set)'}`);
 console.log(`   NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
 
 const app = express()
 const PORT = process.env.PORT || 5000
 
-// Connect to MongoDB
-connectDB()
+// Connect to MongoDB - AWAIT THIS!
+await connectDB()
 
 // API Configuration
 // Use this for free tier from: https://makersuite.google.com/app/apikey
@@ -309,16 +310,26 @@ app.post('/api/chat', async (req, res) => {
         sendProgress('analyzing', `Analyzing ${uploadedFiles.length} uploaded file(s)...`);
         
         context = 'You are an AI code assistant. The user has uploaded the following code files for analysis:\n\n'
+        
+        // Process each file with detailed progress
+        let fileIndex = 0;
         uploadedFiles.forEach(fileName => {
           if (uploadedFilesMap.has(fileName)) {
+            fileIndex++;
+            sendProgress('scanning', `Scanning file ${fileIndex}/${uploadedFiles.length}: ${fileName}`);
+            
             const fileData = uploadedFilesMap.get(fileName)
             const contentPreview = fileData.content.length > 10000 
               ? fileData.content.substring(0, 10000) + '\n... (file truncated for length)'
               : fileData.content
             context += `\n--- File: ${fileData.originalName} ---\n${contentPreview}\n`
+            
+            sendProgress('reading', `Reading ${fileData.originalName} (${fileData.content.length} characters)`);
           }
         })
+        
         context += '\n\nPlease analyze the code and answer the following question:\n'
+        sendProgress('understanding', `Understanding ${uploadedFiles.length} file(s) context...`);
         sendProgress('searching', `Found relevant code in ${uploadedFiles.length} file(s)`);
       } else {
         console.log('⏭️  Skipping file context - user asking general question')
@@ -328,15 +339,18 @@ app.post('/api/chat', async (req, res) => {
       context = 'You are a helpful AI assistant. Please help with the following:\n\n'
     }
 
+    sendProgress('thinking', `AI is analyzing your request...`);
     sendProgress('processing', `Sending request to ${provider.toUpperCase()}...`);
     console.log(`💬 Sending prompt to ${provider.toUpperCase()}...`)
 
     try {
-      sendProgress('generating', `Waiting for ${provider.toUpperCase()} response...`);
+      sendProgress('generating', `Waiting for ${provider.toUpperCase()} to respond...`);
       
       // Limit conversation history to last 10 messages to prevent context overload
       // and reduce AI's tendency to repeat old file analysis
       const recentHistory = conversationHistory.slice(-10);
+      
+      sendProgress('streaming', `Receiving response from ${provider.toUpperCase()}...`);
       
       // Use the unified AI handler
       const result = await handleAIChat(provider, apiKey, message, context, recentHistory)
@@ -345,8 +359,16 @@ app.post('/api/chat', async (req, res) => {
         console.log(`✅ ${provider.toUpperCase()} response received`)
         // Send completion signal
         res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
-        // Send actual content
-        res.write(result.text)
+        
+        // Stream the response word by word for ChatGPT-like effect
+        const words = result.text.split(' ');
+        for (let i = 0; i < words.length; i++) {
+          const word = words[i] + (i < words.length - 1 ? ' ' : '');
+          res.write(word);
+          // Small delay between words for streaming effect (adjust as needed)
+          await new Promise(resolve => setTimeout(resolve, 30));
+        }
+        
         console.log('✅ Response sent to client')
         res.end()
       } else {

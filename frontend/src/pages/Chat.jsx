@@ -238,8 +238,12 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
     try {
       setLoading(true)
       setProcessingStage('uploading')
-      setProcessingDetails(`Uploading ${files.length} file(s)...`)
+      setProcessingDetails(`Preparing to upload ${files.length} file(s)...`)
+      setUploadProgress(10)
+      
+      await new Promise(resolve => setTimeout(resolve, 200))
       setUploadProgress(30)
+      setProcessingDetails(`Uploading ${files.map(f => f.name).join(', ')}...`)
       
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -248,11 +252,17 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
       
       setUploadProgress(70)
       setProcessingStage('analyzing')
-      setProcessingDetails('Processing uploaded files...')
+      setProcessingDetails('Server processing files...')
+      
+      await new Promise(resolve => setTimeout(resolve, 300))
 
       if (response.ok) {
         const data = await response.json()
         setUploadedFiles([...uploadedFiles, ...data.files])
+        setUploadProgress(90)
+        setProcessingDetails('Finalizing upload...')
+        
+        await new Promise(resolve => setTimeout(resolve, 200))
         setUploadProgress(100)
         
         setMessages(prev => [...prev, {
@@ -296,8 +306,12 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
     const newMessages = [...messages, userMessage]
     setMessages(newMessages)
     setLoading(true)
+    
+    // Show detailed processing stages
     setProcessingStage('thinking')
-    setProcessingDetails('Analyzing your request...')
+    setProcessingDetails('Preparing your request...')
+    
+    await new Promise(resolve => setTimeout(resolve, 300))
 
     const loadingMessage = {
       id: Date.now() + 1,
@@ -311,13 +325,21 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
     try {
       // Show file searching stage if files are uploaded
       if (uploadedFiles.length > 0) {
-        setProcessingStage('searching')
-        setProcessingDetails(`Searching through ${uploadedFiles.length} file(s)...`)
-        await new Promise(resolve => setTimeout(resolve, 500))
+        setProcessingStage('scanning')
+        setProcessingDetails(`Preparing to scan ${uploadedFiles.length} file(s)...`)
+        await new Promise(resolve => setTimeout(resolve, 400))
+        
+        setProcessingStage('reading')
+        setProcessingDetails(`Reading file contents...`)
+        await new Promise(resolve => setTimeout(resolve, 400))
+        
+        setProcessingStage('understanding')
+        setProcessingDetails(`Understanding code structure...`)
+        await new Promise(resolve => setTimeout(resolve, 400))
       }
 
       setProcessingStage('processing')
-      setProcessingDetails('Sending request to AI model...')
+      setProcessingDetails('Connecting to AI model...')
 
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -345,6 +367,7 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
       const decoder = new TextDecoder()
       let accumulatedText = ''
       let buffer = ''
+      let lastUpdate = Date.now()
 
       while (true) {
         const { done, value } = await reader.read()
@@ -378,16 +401,23 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
               // Not a JSON line, it's actual content
             }
           } else if (line.trim() && !line.startsWith('data:')) {
-            // Regular text content
+            // Regular text content - add word by word
             accumulatedText += line + '\n'
-            setMessages(prev => {
-              const updated = [...prev]
-              updated[updated.length - 1] = {
-                ...updated[updated.length - 1],
-                text: accumulatedText
-              }
-              return updated
-            })
+            
+            // Throttle updates to create smooth streaming effect
+            // Update every 50ms for smooth appearance
+            const now = Date.now()
+            if (now - lastUpdate > 50 || true) {
+              setMessages(prev => {
+                const updated = [...prev]
+                updated[updated.length - 1] = {
+                  ...updated[updated.length - 1],
+                  text: accumulatedText
+                }
+                return updated
+              })
+              lastUpdate = now
+            }
           }
         }
       }
