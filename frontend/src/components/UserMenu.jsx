@@ -33,9 +33,9 @@ function UserMenu({ user, onSettings, onLogout, lightNameBg }) {
         <div
           className={`w-9 h-9 flex items-center justify-center font-semibold text-base rounded-full border transition-all duration-300
             bg-white text-blue-700 border-blue-400
-            dark:bg-blue-800 dark:text-white dark:border-blue-700
+            dark:bg-slate-800 dark:text-blue-200 dark:border-blue-400
             neon-theme:bg-[#101d12] neon-theme:text-[#39ff14] neon-theme:border-[#39ff14]
-            group-hover:text-blue-700 dark:group-hover:text-white neon-theme:group-hover:text-[#39ff14]
+            group-hover:text-blue-700 dark:group-hover:text-blue-200 neon-theme:group-hover:text-[#39ff14]
             shadow-sm`}
         >
           {user.name.charAt(0).toUpperCase()}
@@ -61,7 +61,7 @@ function UserMenu({ user, onSettings, onLogout, lightNameBg }) {
       </button>
 
       {showMenu && (
-        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 neon-theme:bg-[#1a2f1d] rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 neon-theme:border-[#39ff14] z-50 py-1">
+        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 neon-theme:bg-[#1a2f1d] rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 neon-theme:border-[#39ff14] z-[100] py-1">
           <div className="px-4 py-2 border-b border-gray-200 dark:border-slate-700 neon-theme:border-[#39ff14]">
             <p className="text-sm font-semibold text-gray-900 dark:text-white neon-theme:text-[#39ff14]">
               {user.name}

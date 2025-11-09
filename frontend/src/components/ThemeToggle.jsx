@@ -80,7 +80,7 @@ function ThemeToggle() {
       </button>
 
       {showMenu && (
-        <div className="absolute right-0 mt-2 bg-white dark:bg-slate-800 neon-theme:bg-[#1a2f1d] rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 neon-theme:border-[#39ff14] z-50">
+        <div className="absolute right-0 mt-2 bg-white dark:bg-slate-800 neon-theme:bg-[#1a2f1d] rounded-lg shadow-lg border border-gray-200 dark:border-slate-700 neon-theme:border-[#39ff14] z-[100]">
           {Object.entries(themeLabels).map(([key, label]) => (
             <button
               key={key}

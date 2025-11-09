@@ -66,7 +66,7 @@ function Hero({ onGetStarted, user, authToken, onLogout }) {
       </div>
 
       {/* Header */}
-  <header className="bg-white dark:bg-slate-800 neon-theme:bg-[#1a2f1d] border-b border-gray-200 dark:border-slate-700 neon-theme:border-[#39ff14] px-6 py-4 sticky top-0 z-10 shadow-lg flex-shrink-0">
+  <header className="bg-white dark:bg-slate-800 neon-theme:bg-[#1a2f1d] border-b border-gray-200 dark:border-slate-700 neon-theme:border-[#39ff14] px-6 py-4 sticky top-0 z-50 shadow-lg flex-shrink-0">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.location.href = '/'}>
             <div className="relative">
@@ -103,7 +103,7 @@ function Hero({ onGetStarted, user, authToken, onLogout }) {
       {/* Main Content - Scrollable */}
       <div className="flex-1 overflow-y-auto">
         {/* Hero Section */}
-        <div className="max-w-7xl mx-auto px-6 py-16">
+        <div className="max-w-7xl mx-auto px-6 py-16 min-h-[600px]">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           {/* Left Side - Content */}
           <div className="space-y-8">
@@ -111,12 +111,15 @@ function Hero({ onGetStarted, user, authToken, onLogout }) {
               <div className="inline-block px-4 py-1.5 bg-purple-100 dark:bg-purple-900 neon-theme:bg-[#142a18] border-2 border-purple-400 dark:border-purple-600 neon-theme:border-[#39ff14] text-purple-800 dark:text-purple-200 neon-theme:text-[#39ff14] rounded-full text-sm font-semibold">
                 ⚡ Powered by Multiple Agents 
               </div>
-              <h1 className="text-5xl md:text-6xl font-bold leading-tight text-gray-900 dark:text-white neon-theme:text-[#39ff14] min-h-[4.5rem] md:min-h-[5rem]">
-                <span className="inline-block">
-                  {typedText}
-                  <span className="animate-blink border-r-4 border-purple-600 dark:border-purple-400 neon-theme:border-[#39ff14] ml-1"></span>
-                </span>
-              </h1>
+              <div className="h-[5rem] md:h-[5.5rem] flex items-start">
+                <h1 className="text-5xl md:text-6xl font-bold leading-tight text-gray-900 dark:text-white neon-theme:text-[#39ff14]">
+                  <span className="inline-block">
+                    {typedText}
+                    <span className="animate-blink border-r-4 border-purple-600 dark:border-purple-400 neon-theme:border-[#39ff14] ml-1"></span>
+                  </span>
+                </h1>
+              </div>
+              <br></br>
               <p className="text-lg text-gray-700 dark:text-gray-300 neon-theme:text-[#baffc9] leading-relaxed">
                 One platform, multiple AI models. Chat with Gemini, ChatGPT, Claude & Perplexity.
               </p>

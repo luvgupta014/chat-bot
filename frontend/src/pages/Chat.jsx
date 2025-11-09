@@ -554,7 +554,7 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
         <div className="absolute bottom-[60%] right-[40%] w-16 h-16 bg-indigo-400 dark:bg-indigo-600 neon-theme:bg-[#baffc9] rounded-full opacity-8 animate-bounce-medium"></div>
       </div>
 
-      <header className="bg-white dark:bg-slate-800 neon-theme:bg-[#1a2f1d] border-b border-gray-200 dark:border-slate-700 neon-theme:border-[#39ff14] px-6 py-4 sticky top-0 z-10 shadow-lg flex-shrink-0 relative">
+      <header className="bg-white dark:bg-slate-800 neon-theme:bg-[#1a2f1d] border-b border-gray-200 dark:border-slate-700 neon-theme:border-[#39ff14] px-6 py-4 sticky top-0 z-50 shadow-lg flex-shrink-0 relative">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
             {/* Toggle Chat History Button */}
