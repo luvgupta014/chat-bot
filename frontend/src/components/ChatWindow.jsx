@@ -1,62 +1,8 @@
 import React from 'react'
-import hljs from 'highlight.js'
-import 'highlight.js/styles/github-dark.css'
+import MessageRenderer from './MessageRenderer'
+import ProcessingIndicator from './ProcessingIndicator'
 
-function ChatWindow({ messages, messagesEndRef, loading }) {
-  const formatMessage = (text) => {
-    if (!text) return null
-    
-    // Split text by code blocks
-    const parts = text.split(/```(\w+)?\n([\s\S]*?)```/g)
-    
-    return parts.map((part, index) => {
-      if (index % 4 === 2) {
-        // This is a code block
-        const language = parts[index - 1] || 'javascript'
-        try {
-          const highlighted = hljs.highlight(part, { language }).value
-          return (
-            <div key={index} className="my-3">
-              <div className="flex items-center justify-between bg-gray-800 px-4 py-2 rounded-t-lg">
-                <span className="text-xs text-gray-400 font-mono">{language}</span>
-                <button
-                  onClick={() => navigator.clipboard.writeText(part)}
-                  className="text-xs text-gray-400 hover:text-white transition flex items-center gap-1"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  Copy
-                </button>
-              </div>
-              <pre className="bg-gray-900 text-gray-100 p-4 rounded-b-lg overflow-x-auto text-sm">
-                <code dangerouslySetInnerHTML={{ __html: highlighted }} />
-              </pre>
-            </div>
-          )
-        } catch (e) {
-          return (
-            <pre key={index} className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto my-3 text-sm">
-              <code>{part}</code>
-            </pre>
-          )
-        }
-      }
-      return part && <p key={index} className="whitespace-pre-wrap leading-relaxed">{part}</p>
-    })
-  }
-
-  const LoadingIndicator = () => (
-    <div className="flex items-center gap-3">
-      <div className="flex gap-1.5">
-        <span className="w-2 h-2 bg-blue-500 dark:bg-blue-400 neon-theme:bg-[#39ff14] rounded-full animate-bounce" style={{ animationDelay: '0s' }}></span>
-        <span className="w-2 h-2 bg-blue-500 dark:bg-blue-400 neon-theme:bg-[#39ff14] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-        <span className="w-2 h-2 bg-blue-500 dark:bg-blue-400 neon-theme:bg-[#39ff14] rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
-      </div>
-      <span className="text-sm text-gray-500 dark:text-gray-400 neon-theme:text-[#8ffa70]">AI is analyzing your code...</span>
-    </div>
-  )
-
+function ChatWindow({ messages, messagesEndRef, loading, processingStage, processingDetails }) {
   return (
     <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-900 dark:to-slate-800 neon-theme:from-[#0a150c] neon-theme:to-[#142018]">
       {messages.length === 0 ? (
@@ -102,7 +48,11 @@ function ChatWindow({ messages, messagesEndRef, loading }) {
                     : 'bg-white dark:bg-slate-700 neon-theme:bg-[#142018] text-gray-800 dark:text-gray-200 neon-theme:text-[#8ffa70] border-gray-200 dark:border-slate-600 neon-theme:border-[#39ff14]'
                 }`}
               >
-                {formatMessage(message.text)}
+                {message.sender === 'user' ? (
+                  <p className="whitespace-pre-wrap leading-relaxed">{message.text}</p>
+                ) : (
+                  <MessageRenderer content={message.text} />
+                )}
               </div>
               {message.sender === 'user' && (
                 <div className="w-8 h-8 bg-green-100 dark:bg-green-900 neon-theme:bg-[#142018] rounded-full flex items-center justify-center flex-shrink-0 border border-gray-300 dark:border-slate-600 neon-theme:border-[#39ff14] shadow-sm">
@@ -111,13 +61,30 @@ function ChatWindow({ messages, messagesEndRef, loading }) {
               )}
             </div>
           ))}
-          {loading && (
+          {loading && processingStage && (
+            <div className="flex gap-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 dark:from-purple-600 dark:to-indigo-700 neon-theme:from-[#39ff14] neon-theme:to-[#baffc9] rounded-full flex items-center justify-center flex-shrink-0 border border-gray-300 dark:border-slate-600 neon-theme:border-[#39ff14] shadow-sm">
+                <span className="text-sm">🤖</span>
+              </div>
+              <div className="max-w-2xl flex-1">
+                <ProcessingIndicator stage={processingStage} details={processingDetails} />
+              </div>
+            </div>
+          )}
+          {loading && !processingStage && (
             <div className="flex gap-3">
               <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 dark:from-purple-600 dark:to-indigo-700 neon-theme:from-[#39ff14] neon-theme:to-[#baffc9] rounded-full flex items-center justify-center flex-shrink-0 border border-gray-300 dark:border-slate-600 neon-theme:border-[#39ff14] shadow-sm">
                 <span className="text-sm">🤖</span>
               </div>
               <div className="bg-white dark:bg-slate-700 neon-theme:bg-[#142018] rounded-lg px-4 py-3 shadow-sm border border-gray-200 dark:border-slate-600 neon-theme:border-[#39ff14]">
-                <LoadingIndicator />
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-1.5">
+                    <span className="w-2 h-2 bg-blue-500 dark:bg-blue-400 neon-theme:bg-[#39ff14] rounded-full animate-bounce" style={{ animationDelay: '0s' }}></span>
+                    <span className="w-2 h-2 bg-blue-500 dark:bg-blue-400 neon-theme:bg-[#39ff14] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                    <span className="w-2 h-2 bg-blue-500 dark:bg-blue-400 neon-theme:bg-[#39ff14] rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+                  </div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 neon-theme:text-[#8ffa70]">AI is analyzing your code...</span>
+                </div>
               </div>
             </div>
           )}

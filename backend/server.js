@@ -286,43 +286,78 @@ app.post('/api/chat', async (req, res) => {
     res.setHeader('Cache-Control', 'no-cache')
     res.setHeader('Connection', 'keep-alive')
 
+    // Helper function to send progress updates
+    const sendProgress = (stage, details) => {
+      res.write(`data: ${JSON.stringify({ type: 'progress', stage, details })}\n\n`);
+    };
+
     // Build context from uploaded files
     let context = ''
+    let includeFileContext = false
+    
+    // Only include file context if:
+    // 1. Files are uploaded AND
+    // 2. This is the first message OR user explicitly mentions files/code in their message
     if (uploadedFiles && uploadedFiles.length > 0) {
-      console.log(`📁 Building context from ${uploadedFiles.length} files...`)
-      context = 'You are an AI code assistant. The user has uploaded the following code files for analysis:\n\n'
-      uploadedFiles.forEach(fileName => {
-        if (uploadedFilesMap.has(fileName)) {
-          const fileData = uploadedFilesMap.get(fileName)
-          const contentPreview = fileData.content.length > 10000 
-            ? fileData.content.substring(0, 10000) + '\n... (file truncated for length)'
-            : fileData.content
-          context += `\n--- File: ${fileData.originalName} ---\n${contentPreview}\n`
-        }
-      })
-      context += '\n\nPlease analyze the code and answer the following question:\n'
+      const isFirstMessage = !conversationHistory || conversationHistory.length === 0
+      const mentionsFiles = message.toLowerCase().match(/\b(file|code|analyze|review|check|look at|examine)\b/)
+      
+      includeFileContext = isFirstMessage || mentionsFiles
+      
+      if (includeFileContext) {
+        console.log(`📁 Building context from ${uploadedFiles.length} files...`)
+        sendProgress('analyzing', `Analyzing ${uploadedFiles.length} uploaded file(s)...`);
+        
+        context = 'You are an AI code assistant. The user has uploaded the following code files for analysis:\n\n'
+        uploadedFiles.forEach(fileName => {
+          if (uploadedFilesMap.has(fileName)) {
+            const fileData = uploadedFilesMap.get(fileName)
+            const contentPreview = fileData.content.length > 10000 
+              ? fileData.content.substring(0, 10000) + '\n... (file truncated for length)'
+              : fileData.content
+            context += `\n--- File: ${fileData.originalName} ---\n${contentPreview}\n`
+          }
+        })
+        context += '\n\nPlease analyze the code and answer the following question:\n'
+        sendProgress('searching', `Found relevant code in ${uploadedFiles.length} file(s)`);
+      } else {
+        console.log('⏭️  Skipping file context - user asking general question')
+        context = 'You are a helpful AI assistant. Please help with the following:\n\n'
+      }
     } else {
       context = 'You are a helpful AI assistant. Please help with the following:\n\n'
     }
 
+    sendProgress('processing', `Sending request to ${provider.toUpperCase()}...`);
     console.log(`💬 Sending prompt to ${provider.toUpperCase()}...`)
 
     try {
+      sendProgress('generating', `Waiting for ${provider.toUpperCase()} response...`);
+      
+      // Limit conversation history to last 10 messages to prevent context overload
+      // and reduce AI's tendency to repeat old file analysis
+      const recentHistory = conversationHistory.slice(-10);
+      
       // Use the unified AI handler
-      const result = await handleAIChat(provider, apiKey, message, context, conversationHistory)
+      const result = await handleAIChat(provider, apiKey, message, context, recentHistory)
       
       if (result.success) {
         console.log(`✅ ${provider.toUpperCase()} response received`)
+        // Send completion signal
+        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+        // Send actual content
         res.write(result.text)
         console.log('✅ Response sent to client')
         res.end()
       } else {
         console.error(`❌ ${provider.toUpperCase()} error:`, result.error)
+        res.write(`data: ${JSON.stringify({ type: 'error' })}\n\n`);
         res.write(`❌ Error from ${provider}: ${result.error}\n\nTroubleshooting:\n1. Check your API key is correct\n2. Verify the API is enabled\n3. Check you have sufficient API quota\n4. Try again in a moment`)
         res.end()
       }
     } catch (aiError) {
       console.error(`❌ ${provider.toUpperCase()} error:`, aiError.message)
+      res.write(`data: ${JSON.stringify({ type: 'error' })}\n\n`);
       res.write(`❌ Error: ${aiError.message}\n\nTroubleshooting:\n1. Check your API key is correct\n2. Verify the API is enabled\n3. Check you have sufficient API quota\n4. Try again in a moment`)
       res.end()
     }

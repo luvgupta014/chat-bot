@@ -24,7 +24,28 @@ export async function chatWithGemini(apiKey, message, context = '') {
       try {
         console.log(`    Attempting: ${modelName}...`);
         
-        const fullPrompt = context ? `${context}\n\n${message}` : message;
+        // Build the prompt more intelligently
+        let fullPrompt = '';
+        
+        // If there's a context (file content), only include it if it's relevant
+        if (context && context.length > 50) {
+          // Check if message wants to ignore files
+          const ignoreKeywords = ['ignore', 'without', 'forget', 'clear', 'don\'t use', 'not about'];
+          const shouldIgnoreContext = ignoreKeywords.some(keyword => 
+            message.toLowerCase().includes(keyword + ' file') || 
+            message.toLowerCase().includes(keyword + ' the file') ||
+            message.toLowerCase().includes(keyword + ' code')
+          );
+          
+          if (shouldIgnoreContext) {
+            console.log('    ⚠️  User wants to ignore file context');
+            fullPrompt = message;
+          } else {
+            fullPrompt = `${context}\n\nUser Question: ${message}`;
+          }
+        } else {
+          fullPrompt = message;
+        }
         
         // Use REST API directly - try v1 endpoint first
         const response = await fetch(

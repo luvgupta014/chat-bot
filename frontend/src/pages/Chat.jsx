@@ -7,6 +7,7 @@ import BotSelector from '../components/BotSelector'
 import ThemeToggle from '../components/ThemeToggle'
 import UserMenu from '../components/UserMenu'
 import ChatHistory from '../components/ChatHistory'
+import ProcessingIndicator from '../components/ProcessingIndicator'
 
 function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
   const [messages, setMessages] = useState([])
@@ -19,6 +20,8 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
   const [chats, setChats] = useState([])
   const [currentChatId, setCurrentChatId] = useState(null)
   const [showChatHistory, setShowChatHistory] = useState(true)
+  const [processingStage, setProcessingStage] = useState(null)
+  const [processingDetails, setProcessingDetails] = useState('')
   const messagesEndRef = useRef(null)
 
   // Set initial API key based on selected bot and user
@@ -234,6 +237,8 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
 
     try {
       setLoading(true)
+      setProcessingStage('uploading')
+      setProcessingDetails(`Uploading ${files.length} file(s)...`)
       setUploadProgress(30)
       
       const response = await fetch('/api/upload', {
@@ -242,6 +247,8 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
       })
       
       setUploadProgress(70)
+      setProcessingStage('analyzing')
+      setProcessingDetails('Processing uploaded files...')
 
       if (response.ok) {
         const data = await response.json()
@@ -255,7 +262,11 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
           timestamp: new Date()
         }])
 
-        setTimeout(() => setUploadProgress(0), 1000)
+        setTimeout(() => {
+          setUploadProgress(0)
+          setProcessingStage(null)
+          setProcessingDetails('')
+        }, 1000)
       }
     } catch (error) {
       console.error('Upload error:', error)
@@ -265,6 +276,8 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
         sender: 'system',
         timestamp: new Date()
       }])
+      setProcessingStage(null)
+      setProcessingDetails('')
     } finally {
       setLoading(false)
     }
@@ -283,6 +296,8 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
     const newMessages = [...messages, userMessage]
     setMessages(newMessages)
     setLoading(true)
+    setProcessingStage('thinking')
+    setProcessingDetails('Analyzing your request...')
 
     const loadingMessage = {
       id: Date.now() + 1,
@@ -294,6 +309,16 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
     setMessages(prev => [...prev, loadingMessage])
 
     try {
+      // Show file searching stage if files are uploaded
+      if (uploadedFiles.length > 0) {
+        setProcessingStage('searching')
+        setProcessingDetails(`Searching through ${uploadedFiles.length} file(s)...`)
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+
+      setProcessingStage('processing')
+      setProcessingDetails('Sending request to AI model...')
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -313,17 +338,63 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
         throw new Error(`API error: ${response.status}`)
       }
 
+      setProcessingStage('generating')
+      setProcessingDetails('Receiving response from AI...')
+
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let accumulatedText = ''
+      let buffer = ''
 
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
 
-        const chunk = decoder.decode(value)
-        accumulatedText += chunk
+        const chunk = decoder.decode(value, { stream: true })
+        buffer += chunk
 
+        // Process SSE events
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || '' // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6))
+              
+              if (data.type === 'progress') {
+                // Update processing stage from backend
+                setProcessingStage(data.stage)
+                setProcessingDetails(data.details)
+              } else if (data.type === 'done') {
+                // Clear processing indicators when done
+                setProcessingStage(null)
+                setProcessingDetails('')
+              } else if (data.type === 'error') {
+                setProcessingStage(null)
+                setProcessingDetails('')
+              }
+            } catch (e) {
+              // Not a JSON line, it's actual content
+            }
+          } else if (line.trim() && !line.startsWith('data:')) {
+            // Regular text content
+            accumulatedText += line + '\n'
+            setMessages(prev => {
+              const updated = [...prev]
+              updated[updated.length - 1] = {
+                ...updated[updated.length - 1],
+                text: accumulatedText
+              }
+              return updated
+            })
+          }
+        }
+      }
+
+      // Process any remaining buffer
+      if (buffer.trim() && !buffer.startsWith('data:')) {
+        accumulatedText += buffer
         setMessages(prev => {
           const updated = [...prev]
           updated[updated.length - 1] = {
@@ -333,6 +404,10 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
           return updated
         })
       }
+
+      // Clear processing indicators
+      setProcessingStage(null)
+      setProcessingDetails('')
 
       // Save chat after receiving response
       const finalMessages = [...newMessages, {
@@ -345,6 +420,8 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
 
     } catch (error) {
       console.error('Chat error:', error)
+      setProcessingStage(null)
+      setProcessingDetails('')
       setMessages(prev => {
         const updated = [...prev]
         updated[updated.length - 1] = {
@@ -492,7 +569,13 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
             </div>
           )}
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <ChatWindow messages={messages} messagesEndRef={messagesEndRef} loading={loading} />
+            <ChatWindow 
+              messages={messages} 
+              messagesEndRef={messagesEndRef} 
+              loading={loading} 
+              processingStage={processingStage}
+              processingDetails={processingDetails}
+            />
           </div>
           <InputArea onSendMessage={handleSendMessage} disabled={loading} />
         </div>
@@ -509,9 +592,29 @@ function Chat({ user, authToken, onLogout, onNavigateHome, onApiKeyUpdated }) {
                   <span className="text-gray-700 dark:text-white neon-theme:text-[#39ff14]">📄</span>
                   Uploaded Files
                 </h3>
-                <span className="text-xs bg-blue-100 dark:bg-blue-900 neon-theme:bg-[#142a18] text-blue-700 dark:text-blue-200 neon-theme:text-[#39ff14] px-2 py-1 rounded-full font-medium">
-                  {uploadedFiles.length}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs bg-blue-100 dark:bg-blue-900 neon-theme:bg-[#142a18] text-blue-700 dark:text-blue-200 neon-theme:text-[#39ff14] px-2 py-1 rounded-full font-medium">
+                    {uploadedFiles.length}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setUploadedFiles([])
+                      setMessages(prev => [...prev, {
+                        id: Date.now(),
+                        text: '🗑️ All files cleared. You can now ask general questions without file context.',
+                        sender: 'system',
+                        timestamp: new Date()
+                      }])
+                    }}
+                    className="text-xs bg-red-100 dark:bg-red-900 hover:bg-red-200 dark:hover:bg-red-800 neon-theme:bg-[#1a2f1d] neon-theme:hover:bg-[#142a18] text-red-700 dark:text-red-200 neon-theme:text-[#ff6b6b] px-2 py-1 rounded transition flex items-center gap-1"
+                    title="Clear all files"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Clear All
+                  </button>
+                </div>
               </div>
               <div className="space-y-2">
                 {uploadedFiles.map((file, idx) => (
