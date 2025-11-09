@@ -19,6 +19,15 @@ export default defineConfig(({ mode }) => {
           secure: false
         }
       }
+    },
+    preview: {
+      port: 3000,
+      host: '0.0.0.0',
+      allowedHosts: [
+        'localhost',
+        '127.0.0.1',
+        'chat-bot-frontend-1pav.onrender.com'
+      ]
     }
   }
 })
